@@ -1,6 +1,20 @@
 import { ZodError } from 'zod';
-import type { Prisma } from '../../generated/prisma/client';
-import AppError from './AppError';
+import AppError from './AppError.js';
+
+type PrismaKnownRequestErrorLike = {
+  code: string;
+  meta?: {
+    target?: unknown;
+  };
+};
+
+type PrismaValidationErrorLike = {
+  message: string;
+};
+
+type PrismaInitializationErrorLike = {
+  message: string;
+};
 
 // Error response interface
 interface ErrorResponse {
@@ -23,7 +37,7 @@ const handleZodError = (error: ZodError): ErrorResponse => {
 };
 
 // Handle Prisma unique constraint errors
-const handlePrismaUniqueError = (error: Prisma.PrismaClientKnownRequestError): ErrorResponse => {
+const handlePrismaUniqueError = (error: PrismaKnownRequestErrorLike): ErrorResponse => {
   return {
     success: false,
     message: 'Unique constraint violation',
@@ -37,7 +51,7 @@ const handlePrismaUniqueError = (error: Prisma.PrismaClientKnownRequestError): E
 };
 
 // Handle Prisma validation errors
-const handlePrismaValidationError = (error: Prisma.PrismaClientValidationError): ErrorResponse => {
+const handlePrismaValidationError = (error: PrismaValidationErrorLike): ErrorResponse => {
   return {
     success: false,
     message: 'Database validation error',
@@ -48,7 +62,7 @@ const handlePrismaValidationError = (error: Prisma.PrismaClientValidationError):
 };
 
 // Handle Prisma initialization errors
-const handlePrismaInitializationError = (error: Prisma.PrismaClientInitializationError): ErrorResponse => {
+const handlePrismaInitializationError = (error: PrismaInitializationErrorLike): ErrorResponse => {
   return {
     success: false,
     message: 'Database connection failed',

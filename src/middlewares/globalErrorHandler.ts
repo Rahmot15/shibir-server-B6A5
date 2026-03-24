@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import AppError from '../errors/AppError';
+import AppError from '../errors/AppError.js';
 import {
   handleZodError,
   handlePrismaUniqueError,
@@ -9,7 +9,7 @@ import {
   handleAppError,
   handleGenericError,
   ErrorResponse,
-} from '../errors/errorHandler';
+} from '../errors/errorHandler.js';
 
 const globalErrorHandler = (
   error: unknown,

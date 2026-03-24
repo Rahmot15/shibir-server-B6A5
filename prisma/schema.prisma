@@ -1,16 +1,30 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  SUPPORTER // সমর্থক
+  WORKER // কর্মী
+  ASSOCIATE // সাথী
+  MEMBER // সদস্য
+  ADMIN // অ্যাডমিন
+}
+
 model User {
-    id        String   @id @default(uuid())
-    email     String   @unique
-    name      String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id            String  @id @default(uuid())
+  name          String?
+  email         String  @unique
+  password      String?
+  emailVerified Boolean @default(false)
+  image         String?
+
+  role      Role     @default(SUPPORTER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user")
 }
