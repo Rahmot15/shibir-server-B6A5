@@ -1,109 +1,119 @@
 import { ZodError } from 'zod';
 import AppError from './AppError.js';
+import { Prisma } from '@prisma/client';
 
-type PrismaKnownRequestErrorLike = {
-  code: string;
-  meta?: {
-    target?: unknown;
-  };
-};
-
-type PrismaValidationErrorLike = {
+export type TErrorSource = {
+  path: string | number;
   message: string;
 };
 
-type PrismaInitializationErrorLike = {
+export type TGenericErrorResponse = {
+  statusCode: number;
   message: string;
+  errorSources: TErrorSource[];
 };
 
-// Error response interface
+// Error response interface for the Global Handler
 interface ErrorResponse {
   success: boolean;
   message: string;
-  errorSource: string;
+  errorSources: TErrorSource[];
   err: unknown;
-  slack?: string;
+  stack?: string;
 }
 
 // Handle Zod validation errors
-const handleZodError = (error: ZodError): ErrorResponse => {
+const handleZodError = (error: ZodError): TGenericErrorResponse => {
+  const statusCode = 400;
+  const errorSources: TErrorSource[] = error.issues.map((issue) => ({
+    path: issue.path[issue.path.length - 1] as string | number,
+    message: issue.message,
+  }));
+
   return {
-    success: false,
+    statusCode,
     message: 'Validation Error',
-    errorSource: 'ZOD_VALIDATION_ERROR',
-    err: error.issues,
-    slack: `Zod validation failed with ${error.issues.length} error(s)`,
+    errorSources,
   };
 };
 
-// Handle Prisma unique constraint errors
-const handlePrismaUniqueError = (error: PrismaKnownRequestErrorLike): ErrorResponse => {
+// Handle Prisma Known Request Errors (P2002, P2025, etc.)
+const handlePrismaKnownRequestError = (
+  error: Prisma.PrismaClientKnownRequestError
+): TGenericErrorResponse => {
+  let statusCode = 400;
+  let message = 'Database Error';
+  let errorSources: TErrorSource[] = [];
+
+  if (error.code === 'P2002') {
+    statusCode = 409;
+    message = 'Unique constraint violation';
+    const target = (error.meta?.target as string[]) || ['unknown'];
+    errorSources = target.map((field) => ({
+      path: field,
+      message: `${field} already exists.`,
+    }));
+  } else if (error.code === 'P2025') {
+    statusCode = 404;
+    message = (error.meta?.cause as string) || 'Record not found';
+    errorSources = [{ path: '', message }];
+  } else {
+    errorSources = [{ path: '', message: error.message }];
+  }
+
   return {
-    success: false,
-    message: 'Unique constraint violation',
-    errorSource: 'PRISMA_UNIQUE_VIOLATION',
-    err: {
-      target: error.meta?.target,
-      code: error.code,
-    },
-    slack: `Prisma unique constraint failed on ${error.meta?.target}`,
+    statusCode,
+    message,
+    errorSources,
   };
 };
 
-// Handle Prisma validation errors
-const handlePrismaValidationError = (error: PrismaValidationErrorLike): ErrorResponse => {
+// Handle Prisma Validation Errors
+const handlePrismaValidationError = (
+  error: Prisma.PrismaClientValidationError
+): TGenericErrorResponse => {
   return {
-    success: false,
-    message: 'Database validation error',
-    errorSource: 'PRISMA_VALIDATION_ERROR',
-    err: error.message,
-    slack: 'Prisma validation error occurred',
+    statusCode: 400,
+    message: 'Validation Error',
+    errorSources: [
+      {
+        path: '',
+        message: error.message,
+      },
+    ],
   };
 };
 
-// Handle Prisma initialization errors
-const handlePrismaInitializationError = (error: PrismaInitializationErrorLike): ErrorResponse => {
+const handleAppError = (error: AppError): TGenericErrorResponse => {
   return {
-    success: false,
-    message: 'Database connection failed',
-    errorSource: 'PRISMA_INITIALIZATION_ERROR',
-    err: error.message,
-    slack: 'Prisma client initialization failed',
-  };
-};
-
-// Handle custom app errors
-const handleAppError = (error: AppError): ErrorResponse => {
-  return {
-    success: false,
+    statusCode: error.statusCode,
     message: error.message,
-    errorSource: 'APP_ERROR',
-    err: {
-      statusCode: error.statusCode,
-    },
-    slack: `App error: ${error.message}`,
+    errorSources: [
+      {
+        path: '',
+        message: error.message,
+      },
+    ],
   };
 };
 
-// Handle generic errors
-const handleGenericError = (error: Error): ErrorResponse => {
+const handleGenericError = (error: Error): TGenericErrorResponse => {
   return {
-    success: false,
-    message: error.message || 'Something went wrong',
-    errorSource: 'GENERIC_ERROR',
-    err: {
-      name: error.name,
-      stack: error.stack,
-    },
-    slack: `Unexpected error: ${error.message}`,
+    statusCode: 500,
+    message: error.message || 'Something went wrong!',
+    errorSources: [
+      {
+        path: '',
+        message: error.message || 'Something went wrong!',
+      },
+    ],
   };
 };
 
 export {
   handleZodError,
-  handlePrismaUniqueError,
+  handlePrismaKnownRequestError,
   handlePrismaValidationError,
-  handlePrismaInitializationError,
   handleAppError,
   handleGenericError,
   ErrorResponse,
