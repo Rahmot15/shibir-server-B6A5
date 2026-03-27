@@ -76,9 +76,21 @@ const logout = catchAsync(async (_req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const user = await AuthService.getMe(req.user!.id);
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: 'User retrieved successfully',
+    data: user,
+  });
+});
+
+
 export const AuthController = {
   register,
   login,
   refreshToken,
   logout,
+  getMe,
 };

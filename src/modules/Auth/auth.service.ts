@@ -45,6 +45,7 @@ const registerUser = async (payload: RegisterPayload) => {
       name: true,
       email: true,
       role: true,
+      image: true,
       createdAt: true,
     },
   });
@@ -83,6 +84,7 @@ const loginUser = async (payload: LoginPayload) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      image: user.image,
     },
   };
 };
@@ -115,8 +117,30 @@ const refreshAccessToken = async (refreshToken: string) => {
   };
 };
 
+const getMe = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      createdAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', httpStatus.NOT_FOUND);
+  }
+
+  return user;
+};
+
+
 export const AuthService = {
   registerUser,
   loginUser,
   refreshAccessToken,
+  getMe,
 };
