@@ -1,0 +1,81 @@
+enum SupporterNumericMetric {
+	QURAN
+	HADITH
+	ISLAMIC_BOOK
+	TEXTBOOK_HOURS
+	FRIENDS_CONTACT
+	GOODWORK_HOURS
+	NAMAZ_JAMAAT
+	NAMAZ_QAZA
+}
+
+enum SupporterCheckboxMetric {
+	CLASS
+	SELFCRIT
+	SPORTS
+	NEWSPAPER
+}
+
+model SupporterReport {
+	id          String   @id @default(uuid())
+	supporterId String
+	supporter   User     @relation("SupporterReports", fields: [supporterId], references: [id], onDelete: Cascade)
+
+	month       DateTime @db.Date
+	name        String?
+	school      String?
+	submittedAt DateTime @default(now())
+	createdAt   DateTime @default(now())
+	updatedAt   DateTime @updatedAt
+
+	numericEntries  SupporterReportNumericEntry[]
+	checkboxEntries SupporterReportCheckboxEntry[]
+	advices         SupporterAdvice[]
+
+	@@unique([supporterId, month])
+	@@index([supporterId])
+	@@map("supporter_report")
+}
+
+model SupporterReportNumericEntry {
+	id       String                @id @default(uuid())
+	reportId String
+	report   SupporterReport       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+	metric   SupporterNumericMetric
+	day      Int
+	value    Decimal               @db.Decimal(8, 2)
+
+	@@unique([reportId, metric, day])
+	@@index([reportId, day])
+	@@map("supporter_report_numeric_entry")
+}
+
+model SupporterReportCheckboxEntry {
+	id       String                 @id @default(uuid())
+	reportId String
+	report   SupporterReport        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+	metric   SupporterCheckboxMetric
+	day      Int
+	checked  Boolean                @default(false)
+
+	@@unique([reportId, metric, day])
+	@@index([reportId, day])
+	@@map("supporter_report_checkbox_entry")
+}
+
+model SupporterAdvice {
+	id        String          @id @default(uuid())
+	reportId  String
+	report    SupporterReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+	authorId  String
+	author    User            @relation("SupporterAdviceAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+	text      String
+	createdAt DateTime        @default(now())
+
+	@@index([reportId])
+	@@map("supporter_advice")
+}

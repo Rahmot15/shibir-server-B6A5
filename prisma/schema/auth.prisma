@@ -1,11 +1,3 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
 enum Role {
   SUPPORTER // সমর্থক
   WORKER // কর্মী
@@ -25,6 +17,9 @@ model User {
   role      Role     @default(SUPPORTER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  supporterReports SupporterReport[] @relation("SupporterReports")
+  writtenAdvices   SupporterAdvice[] @relation("SupporterAdviceAuthor")
 
   @@map("user")
 }

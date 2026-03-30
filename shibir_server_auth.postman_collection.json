@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "8a32b9c7-2c9e-4e4a-9b8d-6f2988c5a123",
-		"name": "Shibir Server Auth API",
-		"description": "Collection for testing Authentication endpoints with automated token management.",
+		"name": "Shibir Server API (Auth + Supporter Report)",
+		"description": "Collection for testing Authentication and Supporter Report endpoints with cookie-based auth.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -117,6 +117,195 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Supporter Report",
+			"item": [
+				{
+					"name": "Save/Update My Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"pm.test('Response success true', function () {",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"if (jsonData?.data?.id) {",
+									"    pm.collectionVariables.set('reportId', jsonData.data.id);",
+									"    console.log('reportId set:', jsonData.data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"month\": \"{{reportMonth}}\",\n    \"name\": \"Supporter Test User\",\n    \"school\": \"Dhaka College\",\n    \"numericEntries\": [\n        { \"metric\": \"quran\", \"day\": 1, \"value\": 12 },\n        { \"metric\": \"hadith\", \"day\": 1, \"value\": 2 },\n        { \"metric\": \"textbook\", \"day\": 2, \"value\": 1.5 },\n        { \"metric\": \"namazJamaat\", \"day\": 2, \"value\": 5 }\n    ],\n    \"checkboxEntries\": [\n        { \"metric\": \"class\", \"day\": 1, \"checked\": true },\n        { \"metric\": \"selfcrit\", \"day\": 2, \"checked\": true },\n        { \"metric\": \"sports\", \"day\": 3, \"checked\": false }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/my",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Report History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/my/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"my",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Report By Month",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/my/by-month?month={{reportMonth}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"my",
+								"by-month"
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "{{reportMonth}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Report By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/my/{{reportId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"my",
+								"{{reportId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Advice",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"text\": \"Ei mashe routine aro discipline maintain koren.\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/{{reportId}}/advice",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"{{reportId}}",
+								"advice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Advice List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/{{reportId}}/advice",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"{{reportId}}",
+								"advice"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete My Report",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/supporter-reports/my/{{reportId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"supporter-reports",
+								"my",
+								"{{reportId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -143,6 +332,16 @@
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:5000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "reportMonth",
+			"value": "2026-03",
+			"type": "string"
+		},
+		{
+			"key": "reportId",
+			"value": "",
 			"type": "string"
 		}
 	]
