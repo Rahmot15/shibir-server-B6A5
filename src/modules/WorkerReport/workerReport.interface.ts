@@ -23,3 +23,13 @@ export type TWorkerReport = {
 export type TWorkerAdvicePayload = {
     text: string;
 };
+
+export type TWorkerPlanPayload = {
+    month: string;
+    name?: string;
+    institution?: string;
+    thana?: string;
+    zila?: string;
+    phone?: string;
+    planSnapshot?: Prisma.InputJsonValue | null;
+};

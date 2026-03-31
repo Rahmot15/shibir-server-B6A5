@@ -13,6 +13,7 @@ import {
 } from './workerReport.constant.js';
 import {
     TWorkerAdvicePayload,
+    TWorkerPlanPayload,
     TWorkerReport,
 } from './workerReport.interface.js';
 
@@ -155,6 +156,68 @@ const saveOrUpdateMyReport = async (
                 },
             },
         });
+    });
+
+    return report;
+};
+
+const saveOrUpdateMyPlan = async (
+    userId: string,
+    role: Role,
+    payload: TWorkerPlanPayload
+) => {
+    assertReporterRole(role);
+    const monthDate = toMonthDate(payload.month);
+
+    const report = await prisma.workerReport.upsert({
+        where: {
+            reporterId_month: {
+                reporterId: userId,
+                month: monthDate,
+            },
+        },
+        create: {
+            reporterId: userId,
+            reporterRole: role,
+            month: monthDate,
+            name: payload.name,
+            institution: payload.institution,
+            thana: payload.thana,
+            zila: payload.zila,
+            phone: payload.phone,
+            planSnapshot: normalizePlanSnapshot(payload.planSnapshot),
+        },
+        update: {
+            reporterRole: role,
+            name: payload.name,
+            institution: payload.institution,
+            thana: payload.thana,
+            zila: payload.zila,
+            phone: payload.phone,
+            planSnapshot: normalizePlanSnapshot(payload.planSnapshot),
+            submittedAt: new Date(),
+        },
+        include: {
+            numericEntries: {
+                orderBy: [{ metric: 'asc' }, { day: 'asc' }],
+            },
+            checkboxEntries: {
+                orderBy: [{ metric: 'asc' }, { day: 'asc' }],
+            },
+            advices: {
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+            },
+        },
     });
 
     return report;
@@ -352,6 +415,7 @@ const getAdviceList = async (reportId: string) => {
 
 export const WorkerReportService = {
     saveOrUpdateMyReport,
+    saveOrUpdateMyPlan,
     getMyReportHistory,
     getMyReportByMonth,
     getMyReportById,

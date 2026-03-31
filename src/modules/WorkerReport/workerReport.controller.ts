@@ -17,6 +17,20 @@ const saveOrUpdateMyReport = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const saveOrUpdateMyPlan = catchAsync(async (req: Request, res: Response) => {
+    const report = await WorkerReportService.saveOrUpdateMyPlan(
+        req.user!.id,
+        req.user!.role,
+        req.body
+    );
+
+    res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Worker plan saved successfully',
+        data: report,
+    });
+});
+
 const getMyReportHistory = catchAsync(async (req: Request, res: Response) => {
     const reports = await WorkerReportService.getMyReportHistory(req.user!.id, req.user!.role);
 
@@ -97,6 +111,7 @@ const getAdviceList = catchAsync(async (req: Request, res: Response) => {
 
 export const WorkerReportController = {
     saveOrUpdateMyReport,
+    saveOrUpdateMyPlan,
     getMyReportHistory,
     getMyReportByMonth,
     getMyReportById,

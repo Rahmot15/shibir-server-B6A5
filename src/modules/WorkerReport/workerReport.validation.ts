@@ -34,6 +34,20 @@ const saveReportValidationSchema = z.object({
     body: reportBodyValidationSchema,
 });
 
+const savePlanValidationSchema = z.object({
+    body: z.object({
+        month: z
+            .string()
+            .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Month must be in YYYY-MM format'),
+        name: z.string().trim().max(120).optional(),
+        institution: z.string().trim().max(160).optional(),
+        thana: z.string().trim().max(120).optional(),
+        zila: z.string().trim().max(120).optional(),
+        phone: z.string().trim().max(40).optional(),
+        planSnapshot: z.unknown().optional(),
+    }),
+});
+
 const monthQueryValidationSchema = z.object({
     query: z.object({
         month: z
@@ -59,6 +73,7 @@ const adviceValidationSchema = z.object({
 
 export const workerReportValidationSchema = {
     saveReportValidationSchema,
+    savePlanValidationSchema,
     monthQueryValidationSchema,
     reportIdParamValidationSchema,
     adviceValidationSchema,

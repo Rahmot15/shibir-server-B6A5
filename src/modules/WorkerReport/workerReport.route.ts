@@ -14,6 +14,13 @@ router.post(
 	WorkerReportController.saveOrUpdateMyReport
 );
 
+router.patch(
+	'/my/plan',
+	auth(Role.WORKER, Role.MEMBER, Role.ASSOCIATE),
+	validateRequest(workerReportValidationSchema.savePlanValidationSchema),
+	WorkerReportController.saveOrUpdateMyPlan
+);
+
 router.get(
 	'/my/history',
 	auth(Role.WORKER, Role.MEMBER, Role.ASSOCIATE),
