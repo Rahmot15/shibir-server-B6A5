@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AuthRoutes } from '../modules/Auth/auth.route.js';
 import { SupporterReportRoutes } from '../modules/SupporterReport/supporterReport.route.js';
+import { NoteRoutes } from '../modules/Note/note.route.js';
 
 const router = Router();
 
@@ -11,11 +12,16 @@ const moduleRoutes: { path: string; route: Router }[] = [
     route: AuthRoutes,
   },
   {
-    path: '/supporter-reports',
+    path: '/supporter-report',
     route: SupporterReportRoutes,
+  },
+  {
+    path: '/notes',
+    route: NoteRoutes,
   },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
 
 export default router;
+

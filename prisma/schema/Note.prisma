@@ -1,0 +1,11 @@
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   Json     // TipTap JSON content
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notes")
+}
