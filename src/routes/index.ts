@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthRoutes } from '../modules/Auth/auth.route.js';
 import { SupporterReportRoutes } from '../modules/SupporterReport/supporterReport.route.js';
 import { NoteRoutes } from '../modules/Note/note.route.js';
+import { WorkerReportRoutes } from '../modules/WorkerReport/workerReport.route.js';
 
 const router = Router();
 
@@ -14,6 +15,10 @@ const moduleRoutes: { path: string; route: Router }[] = [
   {
     path: '/supporter-report',
     route: SupporterReportRoutes,
+  },
+  {
+    path: '/worker-report',
+    route: WorkerReportRoutes,
   },
   {
     path: '/notes',

@@ -1,0 +1,104 @@
+enum WorkerNumericMetric {
+  QURAN_AYAH
+  HADITH_COUNT
+  SAHITYA_PAGE
+  TEXTBOOK_HOURS
+  NAMAZ_JAMAAT
+  NAMAZ_QAZA
+  CONTACT_MEMBER
+  CONTACT_SATHI
+  CONTACT_KORMI
+  CONTACT_SOMORTHOK
+  CONTACT_BONDHU
+  CONTACT_MEDHABI
+  CONTACT_VORTAKANGKHI
+  CONTACT_MUHARRAMA
+  DIST_SAHITYA
+  DIST_MAGAZINE
+  DIST_STICKER_CARD
+  DIST_UPOHAR
+  ORG_DAWATI
+  ORG_SANGOTHONIK
+}
+
+enum WorkerCheckboxMetric {
+  CLASS
+  SPORTS
+  NEWSPAPER
+  SELFCRIT
+}
+
+model WorkerReport {
+  id         String   @id @default(uuid())
+  reporterId String
+  reporter   User     @relation("WorkerReports", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // Same report will be used by WORKER, MEMBER, and ASSOCIATE roles.
+  reporterRole Role
+
+  month      DateTime @db.Date
+  name       String?
+  institution String?
+  thana      String?
+  zila       String?
+  phone      String?
+
+  // Snapshot of the long planning form for future-proof storage.
+  planSnapshot Json?
+
+  submittedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  numericEntries  WorkerReportNumericEntry[]
+  checkboxEntries WorkerReportCheckboxEntry[]
+  advices         WorkerAdvice[]
+
+  @@unique([reporterId, month])
+  @@index([reporterId])
+  @@index([reporterRole])
+  @@map("worker_report")
+}
+
+model WorkerReportNumericEntry {
+  id       String              @id @default(uuid())
+  reportId String
+  report   WorkerReport        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  metric   WorkerNumericMetric
+  day      Int
+  value    Decimal             @db.Decimal(10, 2)
+
+  @@unique([reportId, metric, day])
+  @@index([reportId, day])
+  @@map("worker_report_numeric_entry")
+}
+
+model WorkerReportCheckboxEntry {
+  id       String               @id @default(uuid())
+  reportId String
+  report   WorkerReport         @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  metric   WorkerCheckboxMetric
+  day      Int
+  checked  Boolean              @default(false)
+
+  @@unique([reportId, metric, day])
+  @@index([reportId, day])
+  @@map("worker_report_checkbox_entry")
+}
+
+model WorkerAdvice {
+  id        String       @id @default(uuid())
+  reportId  String
+  report    WorkerReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  authorId  String
+  author    User         @relation("WorkerAdviceAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  text      String
+  createdAt DateTime     @default(now())
+
+  @@index([reportId])
+  @@map("worker_advice")
+}

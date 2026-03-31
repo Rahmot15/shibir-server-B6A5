@@ -22,6 +22,8 @@ model User {
 
   supporterReports SupporterReport[] @relation("SupporterReports")
   writtenAdvices   SupporterAdvice[] @relation("SupporterAdviceAuthor")
+  workerReports    WorkerReport[]    @relation("WorkerReports")
+  writtenWorkerAdvices WorkerAdvice[] @relation("WorkerAdviceAuthor")
 
   @@map("user")
 }
