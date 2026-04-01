@@ -31,6 +31,15 @@ const globalErrorHandler = (
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorSources = simplifiedError.errorSources;
+  } else if (error?.status === 413 || error?.type === 'entity.too.large') {
+    statusCode = 413;
+    message = 'Request payload is too large';
+    errorSources = [
+      {
+        path: '',
+        message: 'Reduce note content size or compress/remove large embedded images.',
+      },
+    ];
   } else if (error instanceof Prisma.PrismaClientKnownRequestError) {
     const simplifiedError = handlePrismaKnownRequestError(error);
     statusCode = simplifiedError.statusCode;
