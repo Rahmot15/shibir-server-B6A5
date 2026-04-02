@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync.js';
 import { AuthService } from './auth.service.js';
-import { authValidationSchema } from './auth.validation.js';
 import config from '../../config/index.js';
 import AppError from '../../errors/AppError.js';
 

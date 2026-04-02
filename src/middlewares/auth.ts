@@ -20,7 +20,7 @@ const auth = (...requiredRoles: string[]) => {
     let decoded;
     try {
       decoded = verifyToken(tokenValue, config.jwt_access_secret as Secret);
-    } catch (err) {
+    } catch {
       throw new AppError('Invalid token', httpStatus.UNAUTHORIZED);
     }
 
