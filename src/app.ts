@@ -4,13 +4,19 @@ import cookieParser from 'cookie-parser';
 import notFoundMiddleware from './middlewares/notFoundMiddleware.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
 import router from './routes/index.js';
+import config from './config/index.js';
 
 const app: Application = express();
 
 // parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(
+  cors({
+    origin: config.frontend_url || 'http://localhost:3000',
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 // application routes
