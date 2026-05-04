@@ -4,14 +4,19 @@ import { SupporterReportRoutes } from '../modules/SupporterReport/supporterRepor
 import { NoteRoutes } from '../modules/Note/note.route.js';
 import { WorkerReportRoutes } from '../modules/WorkerReport/workerReport.route.js';
 import { UserRoutes } from '../modules/User/user.route.js';
+import { AuthenticationRoutes } from '../modules/Authentication/authentication.route.js';
 
 const router = Router();
 
 // Add all module routes here and they will be mounted from this router.
 const moduleRoutes: { path: string; route: Router }[] = [
+  // {
+  //   path: '/auth',
+  //   route: AuthRoutes,
+  // },
   {
     path: '/auth',
-    route: AuthRoutes,
+    route: AuthenticationRoutes,
   },
   {
     path: '/supporter-report',
