@@ -6,12 +6,16 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
+    "build": "tsc",
     "dev": "tsx watch src/server.ts",
-    "build": "prisma generate && tsc",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write ."
+    "lint": "eslint ./src/**/*",
+    "migrate": "prisma migrate dev",
+    "generate": "prisma generate",
+    "studio": "prisma studio",
+    "push": "prisma db push",
+    "pull": "prisma db pull",
+    "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

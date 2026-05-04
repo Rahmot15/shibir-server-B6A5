@@ -1,0 +1,13 @@
+enum Role {
+  SUPPORTER // সমর্থক
+  WORKER // কর্মী
+  ASSOCIATE // সাথী
+  MEMBER // সদস্য
+  ADMIN // অ্যাডমিন
+}
+
+enum UserStatus {
+  BLOCKED // ব্লক করা
+  DELETED // মুছে ফেলা
+  ACTIVE // সক্রিয়
+}
