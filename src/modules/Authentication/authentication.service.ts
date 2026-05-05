@@ -3,12 +3,10 @@ import { auth } from "../../lib/auth.js";
 import { tokenUtils } from "../../utils/token.js";
 import AppError from "../../errors/AppError.js";
 import httpStatus from 'http-status';
+import { ILoginUserPayload, IRegisterPatientPayload } from "./authentication.interface.js";
+import { IRequestUser } from "../../interfaces/requestUser.interface.js";
+import { prisma } from "../../lib/prisma.js";
 
-interface IRegisterPatientPayload {
-  name: string;
-  email: string;
-  password: string;
-}
 
 const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
   const { name, email, password } = payload;
@@ -53,10 +51,6 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
   };
 };
 
-interface ILoginUserPayload {
-  email: string;
-  password: string;
-}
 
 const loginUser = async (payload: ILoginUserPayload) => {
   const { email, password } = payload;
@@ -103,7 +97,35 @@ const loginUser = async (payload: ILoginUserPayload) => {
   };
 };
 
+const getMe = async (user: IRequestUser) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.userId,
+    },
+    // select appropriate fields based on your schema
+    // for now, let's select basic info as I don't see doctor/patient models here
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      image: true,
+      status: true,
+      isDeleted: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!isUserExists) {
+    throw new AppError('User not found', httpStatus.NOT_FOUND);
+  }
+
+  return isUserExists;
+};
+
 export const AuthService = {
   RegisterSupporter,
   loginUser,
+  getMe,
 };

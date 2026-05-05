@@ -8,6 +8,7 @@ import catchAsync from '../utils/catchAsync.js';
 import { envVars } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { CookieUtils } from '../utils/cookie.js';
+import { IRequestUser } from '../interfaces/requestUser.interface.js';
 
 const auth = (...requiredRoles: Role[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -65,9 +66,10 @@ const auth = (...requiredRoles: Role[]) => {
         // Set user info to request object
         req.user = {
           id: user.id,
-          role: user.role,
+          userId: user.id,
+          role: user.role as Role,
           email: user.email,
-        } as any;
+        } as IRequestUser;
 
         return next();
       }
@@ -115,9 +117,10 @@ const auth = (...requiredRoles: Role[]) => {
 
     req.user = {
       id: userInDb.id,
-      role: userInDb.role,
+      userId: userInDb.id,
+      role: userInDb.role as Role,
       email: userInDb.email,
-    } as any;
+    } as IRequestUser;
 
     next();
   });
