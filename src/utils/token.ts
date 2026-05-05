@@ -1,26 +1,35 @@
 import { Response } from "express";
-import { JwtPayload, SignOptions } from "jsonwebtoken";
+import { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 import { envVars } from "../config/env.js";
 import { jwtUtils } from "./jwt.js";
 import { CookieUtils } from "./cookie.js";
 
+export type AuthTokenPayload = {
+  userId: string;
+  role: string;
+  name: string;
+  email: string;
+  status: string;
+  isDeleted: boolean;
+  emailVerified: boolean;
+};
 
 //Creating access token
-const getAccessToken = (payload: JwtPayload) => {
+const getAccessToken = (payload: AuthTokenPayload) => {
     const accessToken = jwtUtils.createToken(
         payload,
-        envVars.JWT_ACCESS_SECRET,
-        { expiresIn: envVars.JWT_ACCESS_EXPIRES_IN } as SignOptions
+        envVars.JWT_ACCESS_SECRET as Secret,
+        { expiresIn: envVars.JWT_ACCESS_EXPIRES_IN as SignOptions["expiresIn"] }
     );
 
     return accessToken;
 }
 
-const getRefreshToken = (payload: JwtPayload) => {
+const getRefreshToken = (payload: AuthTokenPayload) => {
     const refreshToken = jwtUtils.createToken(
         payload,
-        envVars.JWT_REFRESH_SECRET,
-        { expiresIn: envVars.JWT_REFRESH_EXPIRES_IN } as SignOptions
+        envVars.JWT_REFRESH_SECRET as Secret,
+        { expiresIn: envVars.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"] }
     );
     return refreshToken;
 }

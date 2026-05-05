@@ -1,6 +1,8 @@
 import { UserStatus } from "@prisma/client";
 import { auth } from "../../lib/auth.js";
 import { tokenUtils } from "../../utils/token.js";
+import AppError from "../../errors/AppError.js";
+import httpStatus from 'http-status';
 
 interface IRegisterPatientPayload {
   name: string;
@@ -20,8 +22,9 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
   });
 
   if (!data.user) {
-    throw new Error("Failed to register patient");
-  }
+        // throw new Error("Failed to register patient");
+        throw new AppError("Failed to register patient", httpStatus.BAD_REQUEST);
+    }
 
   const accessToken = tokenUtils.getAccessToken({
     userId: data.user.id,
@@ -65,13 +68,13 @@ const loginUser = async (payload: ILoginUserPayload) => {
     },
   });
 
-  if (data.user.status === UserStatus.BLOCKED) {
-    throw new Error("User is blocked");
-  }
+   if (data.user.status === UserStatus.BLOCKED) {
+        throw new AppError("User is blocked", httpStatus.FORBIDDEN);
+    }
 
-  if (data.user.isDeleted || data.user.status === UserStatus.DELETED) {
-    throw new Error("User is deleted");
-  }
+    if (data.user.isDeleted || data.user.status === UserStatus.DELETED) {
+        throw new AppError("User is deleted", httpStatus.NOT_FOUND);
+    }
 
   const accessToken = tokenUtils.getAccessToken({
     userId: data.user.id,
