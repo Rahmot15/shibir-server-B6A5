@@ -1,5 +1,5 @@
 import jwt, { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
-import config from '../config/index.js';
+import { envVars } from '../config/env.js';
 
 type AuthTokenPayload = {
   id: string;
@@ -17,16 +17,16 @@ const createToken = (
 const createAccessToken = (payload: AuthTokenPayload) => {
   return createToken(
     payload,
-    config.jwt_access_secret as Secret,
-    config.jwt_access_expires_in as SignOptions['expiresIn']
+    envVars.JWT_ACCESS_SECRET as Secret,
+    envVars.JWT_ACCESS_EXPIRES_IN as SignOptions['expiresIn']
   );
 };
 
 const createRefreshToken = (payload: AuthTokenPayload) => {
   return createToken(
     payload,
-    config.jwt_refresh_secret as Secret,
-    config.jwt_refresh_expires_in as SignOptions['expiresIn']
+    envVars.JWT_REFRESH_SECRET as Secret,
+    envVars.JWT_REFRESH_EXPIRES_IN as SignOptions['expiresIn']
   );
 };
 

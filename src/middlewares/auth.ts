@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 import httpStatus from 'http-status';
 import { Secret } from 'jsonwebtoken';
-import config from '../config/index.js';
 import AppError from '../errors/AppError.js';
 import { verifyToken } from '../lib/jwtHelpers.js';
 import catchAsync from '../utils/catchAsync.js';
+import { envVars } from '../config/env.js';
 
 const auth = (...requiredRoles: string[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -19,7 +19,7 @@ const auth = (...requiredRoles: string[]) => {
 
     let decoded;
     try {
-      decoded = verifyToken(tokenValue, config.jwt_access_secret as Secret);
+      decoded = verifyToken(tokenValue, envVars.JWT_ACCESS_SECRET as Secret);
     } catch {
       throw new AppError('Invalid token', httpStatus.UNAUTHORIZED);
     }

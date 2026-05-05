@@ -9,7 +9,7 @@ import {
   createRefreshToken,
   verifyToken,
 } from '../../lib/jwtHelpers.js';
-import config from '../../config/index.js';
+import { envVars } from '../../config/env.js';
 
 type RegisterPayload = {
   name: string;
@@ -95,7 +95,7 @@ const refreshAccessToken = async (refreshToken: string) => {
   try {
     decodedToken = verifyToken(
       refreshToken,
-      config.jwt_refresh_secret as string
+      envVars.JWT_REFRESH_SECRET as string
     ) as AuthTokenPayload;
   } catch {
     throw new AppError('Invalid refresh token', httpStatus.UNAUTHORIZED);

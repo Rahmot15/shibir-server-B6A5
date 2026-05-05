@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
-import config from "../config/index.js";
 import {
   handleZodError,
   handlePrismaKnownRequestError,
@@ -10,6 +9,7 @@ import {
   handleGenericError,
   TErrorSource,
 } from "../errors/errorHandler.js";
+import { envVars } from "../config/env.js";
 
 const globalErrorHandler = (
   error: any,
@@ -66,7 +66,7 @@ const globalErrorHandler = (
     success: false,
     message,
     errorSources,
-    stack: config.node_env === "development" ? error?.stack : null,
+    stack: envVars.NODE_ENV === "development" ? error?.stack : null,
   });
 };
 
