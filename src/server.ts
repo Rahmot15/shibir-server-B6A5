@@ -1,7 +1,7 @@
 import app from './app.js';
-import config from './config/index.js';
 import { Server } from 'http';
 import { prisma } from './lib/prisma.js';
+import { envVars } from './config/env.js';
 
 let server: Server;
 let isShuttingDown = false;
@@ -78,8 +78,8 @@ process.on('SIGINT', () => {
 async function main() {
   try {
     await prisma.$connect();
-    server = app.listen(config.port, () => {
-      console.log(`Example app listening on port ${config.port}`);
+    server = app.listen(envVars.PORT, () => {
+      console.log(`Example app listening on port ${envVars.PORT}`);
     });
   } catch (err) {
     console.error('Server startup failed:', err);

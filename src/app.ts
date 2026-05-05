@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import notFoundMiddleware from './middlewares/notFoundMiddleware.js';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
 import router from './routes/index.js';
-import config from './config/index.js';
+import { envVars } from './config/env.js';
 
 const app: Application = express();
 
@@ -13,7 +13,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(
   cors({
-    origin: config.frontend_url || 'http://localhost:3000',
+    origin: envVars.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   })
 );

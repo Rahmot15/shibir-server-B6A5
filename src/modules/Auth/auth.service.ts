@@ -3,13 +3,9 @@ import { Role } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 import { prisma } from '../../lib/prisma.js';
 import AppError from '../../errors/AppError.js';
-import {
-  AuthTokenPayload,
-  createAccessToken,
-  createRefreshToken,
-  verifyToken,
-} from '../../lib/jwtHelpers.js';
-import config from '../../config/index.js';
+import { jwtUtils } from '../../utils/jwt.js';
+import { tokenUtils, AuthTokenPayload } from '../../utils/token.js';
+import { envVars } from '../../config/env.js';
 
 type RegisterPayload = {
   name: string;
@@ -68,13 +64,18 @@ const loginUser = async (payload: LoginPayload) => {
     throw new AppError('Invalid email or password', httpStatus.UNAUTHORIZED);
   }
 
-  const jwtPayload: AuthTokenPayload = {
-    id: user.id,
+  const jwtPayload = {
+    userId: user.id,
     role: user.role,
+    name: user.name,
+    email: user.email,
+    status: user.status,
+    isDeleted: user.isDeleted,
+    emailVerified: user.emailVerified,
   };
 
-  const accessToken = createAccessToken(jwtPayload);
-  const refreshToken = createRefreshToken(jwtPayload);
+  const accessToken = tokenUtils.getAccessToken(jwtPayload as any);
+  const refreshToken = tokenUtils.getRefreshToken(jwtPayload as any);
 
   return {
     accessToken,
@@ -93,24 +94,29 @@ const refreshAccessToken = async (refreshToken: string) => {
   let decodedToken: AuthTokenPayload;
 
   try {
-    decodedToken = verifyToken(
+    decodedToken = jwtUtils.verifyToken(
       refreshToken,
-      config.jwt_refresh_secret as string
+      envVars.JWT_REFRESH_SECRET as string
     ) as AuthTokenPayload;
   } catch {
     throw new AppError('Invalid refresh token', httpStatus.UNAUTHORIZED);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: decodedToken.id } });
+  const user = await prisma.user.findUnique({ where: { id: decodedToken.userId } });
 
   if (!user) {
     throw new AppError('User not found', httpStatus.NOT_FOUND);
   }
 
-  const newAccessToken = createAccessToken({
-    id: user.id,
+  const newAccessToken = tokenUtils.getAccessToken({
+    userId: user.id,
     role: user.role,
-  });
+    name: user.name,
+    email: user.email,
+    status: user.status,
+    isDeleted: user.isDeleted,
+    emailVerified: user.emailVerified,
+  } as any);
 
   return {
     accessToken: newAccessToken,

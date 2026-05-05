@@ -2,12 +2,12 @@ import { Request, Response } from 'express';
 import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync.js';
 import { AuthService } from './auth.service.js';
-import config from '../../config/index.js';
 import AppError from '../../errors/AppError.js';
+import { envVars } from '../../config/env.js';
 
 const cookieOptions = {
   httpOnly: true,
-  secure: config.node_env === 'production',
+  secure: envVars.NODE_ENV === 'production',
   sameSite: 'lax' as const,
 };
 
