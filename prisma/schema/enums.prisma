@@ -11,3 +11,9 @@ enum UserStatus {
   DELETED // মুছে ফেলা
   ACTIVE // সক্রিয়
 }
+
+enum ConversationType {
+  VIVA_HELP
+  EXAM_HELP
+  GENERAL_SUPPORT
+}

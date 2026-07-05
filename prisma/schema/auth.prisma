@@ -21,6 +21,10 @@ model User {
   workerReports        WorkerReport[]    @relation("WorkerReports")
   writtenWorkerAdvices WorkerAdvice[]    @relation("WorkerAdviceAuthor")
 
+  supportConversations         SupportConversation[] @relation("SupportConversationUser")
+  assignedSupportConversations SupportConversation[] @relation("SupportConversationAdmin")
+  supportMessages              SupportMessage[]      @relation("SupportMessageSender")
+
   sessions Session[]
   accounts Account[]
 
