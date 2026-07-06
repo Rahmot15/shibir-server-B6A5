@@ -3,6 +3,7 @@ import status from 'http-status';
 import AppError from '../../errors/AppError.js';
 import { IRequestUser } from '../../interfaces/requestUser.interface.js';
 import { prisma } from '../../lib/prisma.js';
+import { emitToConversation } from '../../lib/socket.js';
 import {
   IOpenSupportConversationPayload,
   ISendSupportMessagePayload,
@@ -51,7 +52,7 @@ const supportMessageSelect = {
 } satisfies Prisma.SupportMessageSelect;
 
 const getSupportAdmin = async () => {
-  const admin = await prisma.user.findFirst({
+  const activeAdmin = await prisma.user.findFirst({
     where: {
       role: Role.ADMIN,
       status: UserStatus.ACTIVE,
@@ -65,11 +66,28 @@ const getSupportAdmin = async () => {
     },
   });
 
-  if (!admin) {
+  if (activeAdmin) {
+    return activeAdmin;
+  }
+
+  const fallbackAdmin = await prisma.user.findFirst({
+    where: {
+      role: Role.ADMIN,
+      isDeleted: false,
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!fallbackAdmin) {
     throw new AppError('No active support admin found', status.NOT_FOUND);
   }
 
-  return admin;
+  return fallbackAdmin;
 };
 
 const openConversation = async (user: IRequestUser, payload: IOpenSupportConversationPayload) => {
@@ -229,6 +247,8 @@ const sendMessage = async (user: IRequestUser, payload: ISendSupportMessagePaylo
       },
     });
 
+    emitToConversation(payload.conversationId, 'receive_message', message);
+
     return message;
   });
 };
@@ -236,7 +256,7 @@ const sendMessage = async (user: IRequestUser, payload: ISendSupportMessagePaylo
 const markConversationSeen = async (user: IRequestUser, conversationId: string) => {
   await ensureConversationParticipant(user, conversationId);
 
-  return prisma.supportMessage.updateMany({
+  const result = await prisma.supportMessage.updateMany({
     where: {
       conversationId,
       isSeen: false,
@@ -248,6 +268,14 @@ const markConversationSeen = async (user: IRequestUser, conversationId: string) 
       isSeen: true,
     },
   });
+
+  emitToConversation(conversationId, 'messages_seen', {
+    conversationId,
+    seenByUserId: user.id,
+    count: result.count,
+  });
+
+  return result;
 };
 
 export const SupportChatService = {
