@@ -1,95 +1,107 @@
-import { Request, Response } from 'express';
-import httpStatus from 'http-status';
-import catchAsync from '../../utils/catchAsync.js';
-import { AuthService } from './auth.service.js';
-import config from '../../config/index.js';
-import AppError from '../../errors/AppError.js';
+import { Request, Response } from "express";
+import catchAsync from "../../utils/catchAsync.js";
+import { AuthService } from "./auth.service.js";
+import { sendResponse } from "../../shared/sendResponse.js";
+import { tokenUtils } from "../../utils/token.js";
+import status from "http-status";
+import AppError from "../../errors/AppError.js";
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: config.node_env === 'production',
-  sameSite: 'lax' as const,
-};
+const registerSupporter = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
 
-const register = catchAsync(async (req: Request, res: Response) => {
-  const user = await AuthService.registerUser(req.body);
+  console.log(payload);
 
-  res.status(httpStatus.CREATED).json({
+  const result = await AuthService.RegisterSupporter(payload);
+
+  const { accessToken, refreshToken, token, ...rest } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token as string);
+
+  sendResponse(res, {
+    httpStatusCode: status.CREATED,
     success: true,
-    message: 'User registered successfully',
-    data: user,
-  });
-});
-
-const login = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.loginUser(req.body);
-
-  res.cookie('accessToken', result.accessToken, {
-    ...cookieOptions,
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-
-  res.cookie('refreshToken', result.refreshToken, {
-    ...cookieOptions,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: 'Login successful',
-    data: result.user,
-  });
-});
-
-const refreshToken = catchAsync(async (req: Request, res: Response) => {
-  const refreshTokenValue = req.cookies?.refreshToken;
-
-  if (!refreshTokenValue) {
-    throw new AppError('Refresh token is required', httpStatus.UNAUTHORIZED);
-  }
-
-  const result = await AuthService.refreshAccessToken(refreshTokenValue as string);
-
-  res.cookie('accessToken', result.accessToken, {
-    ...cookieOptions,
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: 'Access token refreshed successfully',
+    message: "Patient registered successfully",
     data: {
-      accessToken: result.accessToken,
+      token,
+      accessToken,
+      refreshToken,
+      ...rest,
     },
   });
 });
 
-const logout = catchAsync(async (_req: Request, res: Response) => {
-  res.clearCookie('accessToken', cookieOptions);
-  res.clearCookie('refreshToken', cookieOptions);
+const loginUser = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const result = await AuthService.loginUser(payload);
+  const { accessToken, refreshToken, token, ...rest } = result;
 
-  res.status(httpStatus.OK).json({
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
     success: true,
-    message: 'Logout successful',
-    data: null,
+    message: "User logged in successfully",
+    data: {
+      token,
+      accessToken,
+      refreshToken,
+      ...rest,
+    },
   });
 });
 
-const getMe = catchAsync(async (req: Request, res: Response) => {
-  const user = await AuthService.getMe(req.user!.id);
+const getMe = catchAsync(
+    async (req: Request, res: Response) => {
+        const user = req.user;
+        console.log({user});
+        const result = await AuthService.getMe(user);
+        sendResponse(res, {
+            httpStatusCode: status.OK,
+            success: true,
+            message: "User profile fetched successfully",
+            data: result,
+        })
+    }
+)
 
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: 'User retrieved successfully',
-    data: user,
-  });
-});
+const getNewToken = catchAsync(
+    async (req: Request, res: Response) => {
+        const refreshToken = req.cookies?.refreshToken;
+        const betterAuthSessionToken = req.cookies?.["better-auth.session_token"];
+        if (!refreshToken) {
+            throw new AppError("Refresh token is missing", status.UNAUTHORIZED);
+        }
+        if (!betterAuthSessionToken) {
+            throw new AppError("Session token is missing", status.UNAUTHORIZED);
+        }
+        const result = await AuthService.getNewToken(refreshToken, betterAuthSessionToken);
 
+        const { accessToken, refreshToken: newRefreshToken, sessionToken } = result;
+
+        tokenUtils.setAccessTokenCookie(res, accessToken);
+        tokenUtils.setRefreshTokenCookie(res, newRefreshToken);
+        tokenUtils.setBetterAuthSessionCookie(res, sessionToken);
+
+        sendResponse(res, {
+            httpStatusCode: status.OK,
+            success: true,
+            message: "New tokens generated successfully",
+            data: {
+                accessToken,
+                refreshToken: newRefreshToken,
+                sessionToken,
+            },
+        });
+    }
+)
 
 export const AuthController = {
-  register,
-  login,
-  refreshToken,
-  logout,
+  registerSupporter,
+  loginUser,
   getMe,
+  getNewToken,
 };

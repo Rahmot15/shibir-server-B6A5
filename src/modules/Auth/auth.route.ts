@@ -1,25 +1,17 @@
 import express from 'express';
 import { AuthController } from './auth.controller.js';
-import validateRequest from '../../middlewares/validateRequest.js';
-import { authValidationSchema } from './auth.validation.js';
 import auth from '../../middlewares/auth.js';
+import { Role } from '@prisma/client';
 
 const router = express.Router();
 
-router.post(
-  '/register',
-  validateRequest(authValidationSchema.registerValidationSchema),
-  AuthController.register
+router.post("/register", AuthController.registerSupporter)
+router.post("/login", AuthController.loginUser)
+router.post("/refresh-token", AuthController.getNewToken)
+router.get(
+  "/me",
+  auth(Role.ADMIN, Role.SUPPORTER, Role.WORKER, Role.MEMBER, Role.ASSOCIATE),
+  AuthController.getMe
 );
-
-router.post(
-  '/login',
-  validateRequest(authValidationSchema.loginValidationSchema),
-  AuthController.login
-);
-
-router.post('/refresh', AuthController.refreshToken);
-router.post('/logout', AuthController.logout);
-router.get('/me', auth(), AuthController.getMe);
 
 export const AuthRoutes = router;

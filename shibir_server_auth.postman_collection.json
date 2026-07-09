@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "8a32b9c7-2c9e-4e4a-9b8d-6f2988c5a123",
 		"name": "Shibir Server API (Auth + Supporter Report)",
-		"description": "Collection for testing Authentication and Supporter Report endpoints with cookie-based auth.",
+		"description": "Collection for testing Auth and Supporter Report endpoints with cookie-based auth.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
