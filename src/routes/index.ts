@@ -1,14 +1,20 @@
 import { Router } from 'express';
-import { AuthRoutes } from '../modules/Auth/auth.route.js';
+
 import { SupporterReportRoutes } from '../modules/SupporterReport/supporterReport.route.js';
 import { NoteRoutes } from '../modules/Note/note.route.js';
 import { WorkerReportRoutes } from '../modules/WorkerReport/workerReport.route.js';
 import { UserRoutes } from '../modules/User/user.route.js';
+import { AuthRoutes } from '../modules/auth/auth.route.js';
+import { SupportChatRoutes } from '../modules/SupportChat/supportChat.route.js';
 
 const router = Router();
 
 // Add all module routes here and they will be mounted from this router.
 const moduleRoutes: { path: string; route: Router }[] = [
+  // {
+  //   path: '/auth',
+  //   route: AuthRoutes,
+  // },
   {
     path: '/auth',
     route: AuthRoutes,
@@ -28,6 +34,10 @@ const moduleRoutes: { path: string; route: Router }[] = [
   {
     path: '/users',
     route: UserRoutes,
+  },
+  {
+    path: '/support',
+    route: SupportChatRoutes,
   },
 ];
 

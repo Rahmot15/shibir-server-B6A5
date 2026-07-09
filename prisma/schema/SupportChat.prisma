@@ -1,0 +1,37 @@
+model SupportConversation {
+  id      String           @id @default(uuid())
+  userId  String
+  adminId String?
+  type    ConversationType
+
+  user     User             @relation("SupportConversationUser", fields: [userId], references: [id], onDelete: Cascade)
+  admin    User?            @relation("SupportConversationAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  messages SupportMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@index([adminId, updatedAt])
+  @@index([type])
+  @@index([updatedAt])
+  @@map("support_conversation")
+}
+
+model SupportMessage {
+  id             String  @id @default(uuid())
+  conversationId String
+  senderId       String
+  text           String  @db.Text
+  isSeen         Boolean @default(false)
+
+  conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User                @relation("SupportMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, isSeen])
+  @@index([senderId])
+  @@map("support_message")
+}

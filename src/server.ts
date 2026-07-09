@@ -1,7 +1,8 @@
 import app from './app.js';
-import config from './config/index.js';
-import { Server } from 'http';
+import { createServer, Server } from 'http';
 import { prisma } from './lib/prisma.js';
+import { envVars } from './config/env.js';
+import { closeSocketServer, initSocketServer } from './lib/socket.js';
 
 let server: Server;
 let isShuttingDown = false;
@@ -38,6 +39,14 @@ const gracefulShutdown = async (signal: string, exitCode = 0) => {
   }, 10000);
 
   forceExitTimer.unref();
+
+  try {
+    await closeSocketServer();
+
+    console.log('Socket server closed.');
+  } catch (error) {
+    console.error('Error while closing socket server:', error);
+  }
 
   try {
     await closeHttpServer();
@@ -78,8 +87,11 @@ process.on('SIGINT', () => {
 async function main() {
   try {
     await prisma.$connect();
-    server = app.listen(config.port, () => {
-      console.log(`Example app listening on port ${config.port}`);
+    const httpServer = createServer(app);
+    initSocketServer(httpServer);
+
+    server = httpServer.listen(envVars.PORT, () => {
+      console.log(`Example app listening on port ${envVars.PORT}`);
     });
   } catch (err) {
     console.error('Server startup failed:', err);
