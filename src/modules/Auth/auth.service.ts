@@ -1,152 +1,198 @@
+import { UserStatus } from "@prisma/client";
+import { auth } from "../../lib/auth.js";
+import { tokenUtils, AuthTokenPayload } from "../../utils/token.js";
+import { jwtUtils } from "../../utils/jwt.js";
+import { envVars } from "../../config/env.js";
+import AppError from "../../errors/AppError.js";
 import httpStatus from 'http-status';
-import { Role } from '@prisma/client';
-import bcryptjs from 'bcryptjs';
-import { prisma } from '../../lib/prisma.js';
-import AppError from '../../errors/AppError.js';
-import { jwtUtils } from '../../utils/jwt.js';
-import { tokenUtils, AuthTokenPayload } from '../../utils/token.js';
-import { envVars } from '../../config/env.js';
+import { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface.js";
+import { IRequestUser } from "../../interfaces/requestUser.interface.js";
+import { prisma } from "../../lib/prisma.js";
 
-type RegisterPayload = {
-  name: string;
-  email: string;
-  password: string;
-};
 
-type LoginPayload = {
-  email: string;
-  password: string;
-};
+const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
+  const { name, email, password } = payload;
+  const data = await auth.api.signUpEmail({
+    body: {
+      name,
+      email,
+      password,
+      // role: Role.SUPPORTER,
+    },
+  });
+  console.log(data.user.id);
 
-const registerUser = async (payload: RegisterPayload) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { email: payload.email },
+  if (!data.user) {
+        // throw new Error("Failed to register patient");
+        throw new AppError("Failed to register patient", httpStatus.BAD_REQUEST);
+    }
+
+  const accessToken = tokenUtils.getAccessToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
   });
 
-  if (existingUser) {
-    throw new AppError('User already exists with this email', httpStatus.CONFLICT);
-  }
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  });
 
-  const hashedPassword = await bcryptjs.hash(payload.password, 10);
+  return {
+    ...data,
+    accessToken,
+    refreshToken,
+  };
+};
 
-  const user = await prisma.user.create({
-    data: {
-      name: payload.name,
-      email: payload.email,
-      password: hashedPassword,
-      role: Role.SUPPORTER,
+
+const loginUser = async (payload: ILoginUserPayload) => {
+  const { email, password } = payload;
+
+  const data = await auth.api.signInEmail({
+    body: {
+      email,
+      password,
     },
+  });
+
+   if (data.user.status === UserStatus.BLOCKED) {
+        throw new AppError("User is blocked", httpStatus.FORBIDDEN);
+    }
+
+    if (data.user.isDeleted || data.user.status === UserStatus.DELETED) {
+        throw new AppError("User is deleted", httpStatus.NOT_FOUND);
+    }
+
+  const accessToken = tokenUtils.getAccessToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  });
+
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name,
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  });
+
+  return {
+    ...data,
+    accessToken,
+    refreshToken,
+  };
+};
+
+const getMe = async (user: IRequestUser) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.userId,
+    },
+    // select appropriate fields based on your schema
+    // for now, let's select basic info as I don't see doctor/patient models here
     select: {
       id: true,
       name: true,
       email: true,
       role: true,
       image: true,
+      status: true,
+      isDeleted: true,
       createdAt: true,
+      updatedAt: true,
     },
   });
 
-  return user;
-};
-
-const loginUser = async (payload: LoginPayload) => {
-  const user = await prisma.user.findUnique({
-    where: { email: payload.email },
-  });
-
-  if (!user || !user.password) {
-    throw new AppError('Invalid email or password', httpStatus.UNAUTHORIZED);
-  }
-
-  const isPasswordMatched = await bcryptjs.compare(payload.password, user.password);
-
-  if (!isPasswordMatched) {
-    throw new AppError('Invalid email or password', httpStatus.UNAUTHORIZED);
-  }
-
-  const jwtPayload = {
-    userId: user.id,
-    role: user.role,
-    name: user.name,
-    email: user.email,
-    status: user.status,
-    isDeleted: user.isDeleted,
-    emailVerified: user.emailVerified,
-  };
-
-  const accessToken = tokenUtils.getAccessToken(jwtPayload as any);
-  const refreshToken = tokenUtils.getRefreshToken(jwtPayload as any);
-
-  return {
-    accessToken,
-    refreshToken,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      image: user.image,
-    },
-  };
-};
-
-const refreshAccessToken = async (refreshToken: string) => {
-  let decodedToken: AuthTokenPayload;
-
-  try {
-    decodedToken = jwtUtils.verifyToken(
-      refreshToken,
-      envVars.JWT_REFRESH_SECRET as string
-    ) as AuthTokenPayload;
-  } catch {
-    throw new AppError('Invalid refresh token', httpStatus.UNAUTHORIZED);
-  }
-
-  const user = await prisma.user.findUnique({ where: { id: decodedToken.userId } });
-
-  if (!user) {
+  if (!isUserExists) {
     throw new AppError('User not found', httpStatus.NOT_FOUND);
   }
 
+  return isUserExists;
+};
+
+const getNewToken = async (refreshToken: string, sessionToken: string) => {
+  const isSessionTokenExists = await prisma.session.findUnique({
+    where: {
+      token: sessionToken,
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  if (!isSessionTokenExists) {
+    throw new AppError("Invalid session token", httpStatus.UNAUTHORIZED);
+  }
+
+  let verifiedRefreshToken;
+  try {
+    verifiedRefreshToken = jwtUtils.verifyToken(
+      refreshToken,
+      envVars.JWT_REFRESH_SECRET
+    );
+  } catch (error) {
+    throw new AppError("Invalid refresh token", httpStatus.UNAUTHORIZED);
+  }
+
+  const data = verifiedRefreshToken as AuthTokenPayload;
+
   const newAccessToken = tokenUtils.getAccessToken({
-    userId: user.id,
-    role: user.role,
-    name: user.name,
-    email: user.email,
-    status: user.status,
-    isDeleted: user.isDeleted,
-    emailVerified: user.emailVerified,
-  } as any);
+    userId: data.userId,
+    role: data.role,
+    name: data.name,
+    email: data.email,
+    status: data.status,
+    isDeleted: data.isDeleted,
+    emailVerified: data.emailVerified,
+  });
+
+  const newRefreshToken = tokenUtils.getRefreshToken({
+    userId: data.userId,
+    role: data.role,
+    name: data.name,
+    email: data.email,
+    status: data.status,
+    isDeleted: data.isDeleted,
+    emailVerified: data.emailVerified,
+  });
+
+  const updatedSession = await prisma.session.update({
+    where: {
+      token: sessionToken,
+    },
+    data: {
+      expiresAt: new Date(Date.now() + 60 * 60 * 60 * 24 * 1000),
+      updatedAt: new Date(),
+    },
+  });
 
   return {
     accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    sessionToken: updatedSession.token,
   };
 };
 
-const getMe = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      image: true,
-      createdAt: true,
-    },
-  });
-
-  if (!user) {
-    throw new AppError('User not found', httpStatus.NOT_FOUND);
-  }
-
-  return user;
-};
-
-
 export const AuthService = {
-  registerUser,
+  RegisterSupporter,
   loginUser,
-  refreshAccessToken,
   getMe,
+  getNewToken,
 };
