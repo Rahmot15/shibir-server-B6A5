@@ -1,8 +1,4 @@
 import { Router } from 'express';
-<<<<<<< HEAD
-=======
-
->>>>>>> fb9a1bf814a487e51c3a588f0f2d1c33c0d79772
 import { SupporterReportRoutes } from '../modules/SupporterReport/supporterReport.route.js';
 import { NoteRoutes } from '../modules/Note/note.route.js';
 import { WorkerReportRoutes } from '../modules/WorkerReport/workerReport.route.js';
