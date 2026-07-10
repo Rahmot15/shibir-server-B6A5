@@ -55,6 +55,15 @@ const globalErrorHandler = (
     statusCode = simplifiedError.statusCode;
     message = simplifiedError.message;
     errorSources = simplifiedError.errorSources;
+  } else if (typeof error?.statusCode === "number" || typeof error?.status === "number") {
+    statusCode = error.statusCode || error.status;
+    message = error.message || "Something went wrong!";
+    errorSources = [
+      {
+        path: "",
+        message,
+      },
+    ];
   } else if (error instanceof Error) {
     const simplifiedError = handleGenericError(error);
     statusCode = simplifiedError.statusCode;

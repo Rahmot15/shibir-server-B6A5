@@ -8,6 +8,8 @@ import httpStatus from 'http-status';
 import { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface.js";
 import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { prisma } from "../../lib/prisma.js";
+import bcryptjs from "bcryptjs";
+import { randomUUID } from "crypto";
 
 
 const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
@@ -30,7 +32,7 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
   const accessToken = tokenUtils.getAccessToken({
     userId: data.user.id,
     role: data.user.role,
-    name: data.user.name,
+    name: data.user.name || "",
     email: data.user.email,
     status: data.user.status,
     isDeleted: data.user.isDeleted,
@@ -40,7 +42,7 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
   const refreshToken = tokenUtils.getRefreshToken({
     userId: data.user.id,
     role: data.user.role,
-    name: data.user.name,
+    name: data.user.name || "",
     email: data.user.email,
     status: data.user.status,
     isDeleted: data.user.isDeleted,
@@ -58,12 +60,18 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
 const loginUser = async (payload: ILoginUserPayload) => {
   const { email, password } = payload;
 
-  const data = await auth.api.signInEmail({
-    body: {
-      email,
-      password,
-    },
-  });
+  let data;
+
+  try {
+    data = await auth.api.signInEmail({
+      body: {
+        email,
+        password,
+      },
+    });
+  } catch {
+    data = await loginLegacyUser(email, password);
+  }
 
    if (data.user.status === UserStatus.BLOCKED) {
         throw new AppError("User is blocked", httpStatus.FORBIDDEN);
@@ -76,7 +84,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
   const accessToken = tokenUtils.getAccessToken({
     userId: data.user.id,
     role: data.user.role,
-    name: data.user.name,
+    name: data.user.name || "",
     email: data.user.email,
     status: data.user.status,
     isDeleted: data.user.isDeleted,
@@ -86,7 +94,7 @@ const loginUser = async (payload: ILoginUserPayload) => {
   const refreshToken = tokenUtils.getRefreshToken({
     userId: data.user.id,
     role: data.user.role,
-    name: data.user.name,
+    name: data.user.name || "",
     email: data.user.email,
     status: data.user.status,
     isDeleted: data.user.isDeleted,
@@ -97,6 +105,39 @@ const loginUser = async (payload: ILoginUserPayload) => {
     ...data,
     accessToken,
     refreshToken,
+  };
+};
+
+const loginLegacyUser = async (email: string, password: string) => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user?.password) {
+    throw new AppError("Invalid email or password", httpStatus.UNAUTHORIZED);
+  }
+
+  const isPasswordMatched = await bcryptjs.compare(password, user.password);
+
+  if (!isPasswordMatched) {
+    throw new AppError("Invalid email or password", httpStatus.UNAUTHORIZED);
+  }
+
+  const sessionToken = randomUUID();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 24 * 1000);
+
+  await prisma.session.create({
+    data: {
+      id: randomUUID(),
+      token: sessionToken,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  return {
+    token: sessionToken,
+    user,
   };
 };
 
