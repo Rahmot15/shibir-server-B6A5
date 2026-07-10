@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import status from 'http-status';
 
 dotenv.config();
 
@@ -17,10 +16,17 @@ interface EnvConfig {
     JWT_REFRESH_SECRET: string;
     JWT_REFRESH_EXPIRES_IN: string;
     STRIPE_SECRET_KEY: string;
-    ADMIN_EMAIL: string;
-    ADMIN_PASSWORD: string;
+    ADMIN_EMAIL?: string;
+    ADMIN_PASSWORD?: string;
 }
 
+export const requireEnvVariables = (variables: string[]) => {
+    variables.forEach((variable) => {
+        if (!process.env[variable]) {
+            throw new Error(`${variable} is required but not set in environment variables.`);
+        }
+    })
+}
 
 const loadEnvVariables = (): EnvConfig => {
 
@@ -37,16 +43,10 @@ const loadEnvVariables = (): EnvConfig => {
         'JWT_ACCESS_EXPIRES_IN',
         'JWT_REFRESH_SECRET',
         'JWT_REFRESH_EXPIRES_IN',
-        'STRIPE_SECRET_KEY',
-        'ADMIN_EMAIL',
-        'ADMIN_PASSWORD'
+        'STRIPE_SECRET_KEY'
     ]
 
-    requireEnvVariable.forEach((variable) => {
-        if (!process.env[variable]) {
-            throw new Error(`${variable} is required but not set in .env file.`);
-        }
-    })
+    requireEnvVariables(requireEnvVariable);
 
     return {
         NODE_ENV: process.env.NODE_ENV as string,
@@ -62,8 +62,8 @@ const loadEnvVariables = (): EnvConfig => {
         JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
         JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN as string,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string,
-        ADMIN_EMAIL: process.env.ADMIN_EMAIL as string,
-        ADMIN_PASSWORD: process.env.ADMIN_PASSWORD as string,
+        ADMIN_EMAIL: process.env.ADMIN_EMAIL,
+        ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
     }
 }
 
