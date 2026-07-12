@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { bearer } from "better-auth/plugins";
 import { prisma } from "./prisma.js";
 import { Role, UserStatus } from "@prisma/client";
 // If your Prisma file is located elsewhere, you can change the path
@@ -55,4 +56,8 @@ export const auth = betterAuth({
       maxAge: 60 * 60 * 60 * 24, // 1 day in seconds
     },
   },
+
+  plugins: [
+    bearer(),
+  ],
 });

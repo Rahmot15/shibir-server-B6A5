@@ -5,7 +5,7 @@ import { jwtUtils } from "../../utils/jwt.js";
 import { envVars } from "../../config/env.js";
 import AppError from "../../errors/AppError.js";
 import httpStatus from 'http-status';
-import { ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface.js";
+import { IChangePasswordPayload, ILoginUserPayload, IRegisterPatientPayload } from "./auth.interface.js";
 import { IRequestUser } from "../../interfaces/requestUser.interface.js";
 import { prisma } from "../../lib/prisma.js";
 import bcryptjs from "bcryptjs";
@@ -231,9 +231,104 @@ const getNewToken = async (refreshToken: string, sessionToken: string) => {
   };
 };
 
+const changePassword = async (
+  payload: IChangePasswordPayload,
+  sessionToken?: string
+) => {
+  if (!sessionToken) {
+    throw new AppError("Session token is missing", httpStatus.UNAUTHORIZED);
+  }
+
+  const session = await prisma.session.findFirst({
+    where: {
+      token: sessionToken,
+      expiresAt: { gt: new Date() },
+    },
+    include: { user: true },
+  });
+
+  if (!session) {
+    throw new AppError("Invalid session token", httpStatus.UNAUTHORIZED);
+  }
+
+  const { currentPassword, newPassword } = payload;
+
+  // Older Shibir users have their hash in User.password; Better Auth users
+  // keep it in Account.password. Support both while the existing users migrate.
+  if (session.user.password) {
+    const isPasswordMatched = await bcryptjs.compare(
+      currentPassword,
+      session.user.password
+    );
+
+    if (!isPasswordMatched) {
+      throw new AppError("Current password is incorrect", httpStatus.UNAUTHORIZED);
+    }
+
+    const password = await bcryptjs.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { password, needPasswordChange: false },
+    });
+
+    await prisma.session.deleteMany({
+      where: { userId: session.user.id, token: { not: sessionToken } },
+    });
+  } else {
+    await auth.api.changePassword({
+      body: {
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: true,
+      },
+      headers: new Headers({ Authorization: `Bearer ${sessionToken}` }),
+    });
+
+    if (session.user.needPasswordChange) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { needPasswordChange: false },
+      });
+    }
+  }
+
+  const user = session.user;
+  const accessToken = tokenUtils.getAccessToken({
+    userId: user.id,
+    role: user.role,
+    name: user.name || "",
+    email: user.email,
+    status: user.status,
+    isDeleted: user.isDeleted,
+    emailVerified: user.emailVerified,
+  });
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: user.id,
+    role: user.role,
+    name: user.name || "",
+    email: user.email,
+    status: user.status,
+    isDeleted: user.isDeleted,
+    emailVerified: user.emailVerified,
+  });
+
+  return { accessToken, refreshToken };
+};
+
+const logoutUser = async (sessionToken?: string) => {
+  if (!sessionToken) {
+    return null;
+  }
+
+  await prisma.session.deleteMany({ where: { token: sessionToken } });
+  return null;
+};
+
 export const AuthService = {
   RegisterSupporter,
   loginUser,
   getMe,
   getNewToken,
+  changePassword,
+  logoutUser,
 };
