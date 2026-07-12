@@ -1,8 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { bearer } from "better-auth/plugins";
+import { bearer, emailOTP } from "better-auth/plugins";
 import { prisma } from "./prisma.js";
 import { Role, UserStatus } from "@prisma/client";
+import { sendEmail } from "../utils/email.js";
 // If your Prisma file is located elsewhere, you can change the path
 
 export const auth = betterAuth({
@@ -12,6 +13,13 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
   },
 
   user: {
@@ -59,5 +67,65 @@ export const auth = betterAuth({
 
   plugins: [
     bearer(),
+    emailOTP({
+      overrideDefaultEmailVerification: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        const user = await prisma.user.findUnique({
+          where: {
+            email,
+          },
+        });
+
+        if (!user) return;
+
+        if (type === "email-verification" && !user.emailVerified) {
+          await sendEmail({
+            to: email,
+            subject: "Verify your email",
+            templateName: "otp",
+            templateData: {
+              name: user.name,
+              otp,
+              purpose: "verify your email address",
+            },
+          });
+        } else if (type === "forget-password") {
+          await sendEmail({
+            to: email,
+            subject: "Password Reset OTP",
+            templateName: "otp",
+            templateData: {
+              name: user.name,
+              otp,
+              purpose: "reset your password",
+            },
+          });
+        } else if (type === "change-email") {
+          await sendEmail({
+            to: email,
+            subject: "Change Email OTP",
+            templateName: "otp",
+            templateData: {
+              name: user.name,
+              otp,
+              purpose: "confirm your email change",
+            },
+          });
+        } else if (type === "sign-in") {
+          await sendEmail({
+            to: email,
+            subject: "Sign In OTP",
+            templateName: "otp",
+            templateData: {
+              name: user.name,
+              otp,
+              purpose: "sign in to your account",
+            },
+          });
+        }
+      },
+      expiresIn: 2 * 60, // 2 minutes
+      otpLength: 6,
+    }),
   ],
 });

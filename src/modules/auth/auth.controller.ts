@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync.js";
 import { AuthService } from "./auth.service.js";
 import { sendResponse } from "../../shared/sendResponse.js";
 import { tokenUtils } from "../../utils/token.js";
+import { CookieUtils } from "../../utils/cookie.js";
 import status from "http-status";
 import AppError from "../../errors/AppError.js";
 
@@ -114,10 +115,45 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const resendEmailVerificationOTP = catchAsync(async (req: Request, res: Response) => {
+  await AuthService.resendEmailVerificationOTP(req.body.email);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "If the account needs verification, a new OTP has been sent.",
+    data: null,
+  });
+});
+
+const verifyEmailOTP = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.verifyEmailOTP(req.body.email, req.body.otp);
+  const { accessToken, refreshToken, token, ...rest } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  if (token) tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Email verified successfully",
+    data: { token, accessToken, refreshToken, ...rest },
+  });
+});
+
 const logoutUser = catchAsync(async (req: Request, res: Response) => {
   const sessionToken = req.cookies?.["better-auth.session_token"];
   await AuthService.logoutUser(sessionToken);
-  tokenUtils.clearAuthCookies(res);
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none" as const,
+    path: "/",
+  };
+  CookieUtils.clearCookie(res, "accessToken", cookieOptions);
+  CookieUtils.clearCookie(res, "refreshToken", cookieOptions);
+  CookieUtils.clearCookie(res, "better-auth.session_token", cookieOptions);
 
   sendResponse(res, {
     httpStatusCode: status.OK,
@@ -130,6 +166,8 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
 export const AuthController = {
   registerSupporter,
   loginUser,
+  resendEmailVerificationOTP,
+  verifyEmailOTP,
   getMe,
   getNewToken,
   changePassword,

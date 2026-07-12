@@ -9,6 +9,8 @@ const router = express.Router();
 
 router.post("/register", AuthController.registerSupporter)
 router.post("/login", AuthController.loginUser)
+router.post("/resend-verification-otp", AuthController.resendEmailVerificationOTP)
+router.post("/verify-email", AuthController.verifyEmailOTP)
 router.post("/refresh-token", AuthController.getNewToken)
 router.post(
   "/change-password",

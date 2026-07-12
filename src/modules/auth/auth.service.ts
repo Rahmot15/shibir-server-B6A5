@@ -141,6 +141,45 @@ const loginLegacyUser = async (email: string, password: string) => {
   };
 };
 
+const resendEmailVerificationOTP = async (email: string) => {
+  await auth.api.sendVerificationOTP({
+    body: { email, type: "email-verification" },
+  });
+};
+
+const verifyEmailOTP = async (email: string, otp: string) => {
+  const data = await auth.api.verifyEmailOTP({ body: { email, otp } });
+
+  if (!data.user) {
+    throw new AppError("Email verification failed", httpStatus.BAD_REQUEST);
+  }
+
+  if (data.user.status === UserStatus.BLOCKED) {
+    throw new AppError("User is blocked", httpStatus.FORBIDDEN);
+  }
+
+  const accessToken = tokenUtils.getAccessToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name || "",
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  });
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: data.user.id,
+    role: data.user.role,
+    name: data.user.name || "",
+    email: data.user.email,
+    status: data.user.status,
+    isDeleted: data.user.isDeleted,
+    emailVerified: data.user.emailVerified,
+  });
+
+  return { ...data, accessToken, refreshToken };
+};
+
 const getMe = async (user: IRequestUser) => {
   const isUserExists = await prisma.user.findUnique({
     where: {
@@ -327,6 +366,8 @@ const logoutUser = async (sessionToken?: string) => {
 export const AuthService = {
   RegisterSupporter,
   loginUser,
+  resendEmailVerificationOTP,
+  verifyEmailOTP,
   getMe,
   getNewToken,
   changePassword,

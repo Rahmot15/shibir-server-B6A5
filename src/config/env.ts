@@ -15,6 +15,13 @@ interface EnvConfig {
     JWT_ACCESS_EXPIRES_IN: string;
     JWT_REFRESH_SECRET: string;
     JWT_REFRESH_EXPIRES_IN: string;
+    EMAIL_SENDER: {
+        SMTP_USER: string;
+        SMTP_PASS: string;
+        SMTP_HOST: string;
+        SMTP_PORT: string;
+        SMTP_FROM: string;
+    };
     STRIPE_SECRET_KEY: string;
     ADMIN_EMAIL?: string;
     ADMIN_PASSWORD?: string;
@@ -43,6 +50,11 @@ const loadEnvVariables = (): EnvConfig => {
         'JWT_ACCESS_EXPIRES_IN',
         'JWT_REFRESH_SECRET',
         'JWT_REFRESH_EXPIRES_IN',
+        'EMAIL_SENDER_SMTP_USER',
+        'EMAIL_SENDER_SMTP_PASS',
+        'EMAIL_SENDER_SMTP_HOST',
+        'EMAIL_SENDER_SMTP_PORT',
+        'EMAIL_SENDER_SMTP_FROM',
         'STRIPE_SECRET_KEY'
     ]
 
@@ -61,6 +73,13 @@ const loadEnvVariables = (): EnvConfig => {
         JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN as string,
         JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
         JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN as string,
+        EMAIL_SENDER: {
+            SMTP_USER: process.env.EMAIL_SENDER_SMTP_USER as string,
+            SMTP_PASS: process.env.EMAIL_SENDER_SMTP_PASS as string,
+            SMTP_HOST: process.env.EMAIL_SENDER_SMTP_HOST as string,
+            SMTP_PORT: process.env.EMAIL_SENDER_SMTP_PORT as string,
+            SMTP_FROM: process.env.EMAIL_SENDER_SMTP_FROM as string,
+        },
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string,
         ADMIN_EMAIL: process.env.ADMIN_EMAIL,
         ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
