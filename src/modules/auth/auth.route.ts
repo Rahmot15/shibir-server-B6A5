@@ -24,5 +24,7 @@ router.get(
   auth(Role.ADMIN, Role.SUPPORTER, Role.WORKER, Role.MEMBER, Role.ASSOCIATE),
   AuthController.getMe
 );
+router.post("/forget-password", AuthController.forgetPassword);
+router.post("/reset-password", AuthController.resetPassword);
 
 export const AuthRoutes = router;

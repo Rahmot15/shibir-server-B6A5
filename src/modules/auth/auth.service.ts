@@ -26,7 +26,7 @@ const RegisterSupporter = async (payload: IRegisterPatientPayload) => {
 
   if (!data.user) {
         // throw new Error("Failed to register patient");
-        throw new AppError("Failed to register patient", httpStatus.BAD_REQUEST);
+        throw new AppError(" Failed to register ", httpStatus.BAD_REQUEST);
     }
 
   const accessToken = tokenUtils.getAccessToken({
@@ -363,6 +363,81 @@ const logoutUser = async (sessionToken?: string) => {
   return null;
 };
 
+const forgetPassword = async (email: string) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!isUserExist) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+
+  if (!isUserExist.emailVerified) {
+    throw new AppError("Email not verified", httpStatus.BAD_REQUEST);
+  }
+
+  if (isUserExist.isDeleted || isUserExist.status === UserStatus.DELETED) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+
+  await auth.api.requestPasswordResetEmailOTP({
+    body: {
+      email,
+    },
+  });
+};
+
+const resetPassword = async (
+  email: string,
+  otp: string,
+  newPassword: string
+) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!isUserExist) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+
+  if (!isUserExist.emailVerified) {
+    throw new AppError("Email not verified", httpStatus.BAD_REQUEST);
+  }
+
+  if (isUserExist.isDeleted || isUserExist.status === UserStatus.DELETED) {
+    throw new AppError("User not found", httpStatus.NOT_FOUND);
+  }
+
+  await auth.api.resetPasswordEmailOTP({
+    body: {
+      email,
+      otp,
+      password: newPassword,
+    },
+  });
+
+  if (isUserExist.needPasswordChange) {
+    await prisma.user.update({
+      where: {
+        id: isUserExist.id,
+      },
+      data: {
+        needPasswordChange: false,
+      },
+    });
+  }
+
+  await prisma.session.deleteMany({
+    where: {
+      userId: isUserExist.id,
+    },
+  });
+};
+
 export const AuthService = {
   RegisterSupporter,
   loginUser,
@@ -372,4 +447,7 @@ export const AuthService = {
   getNewToken,
   changePassword,
   logoutUser,
+  forgetPassword,
+  resetPassword,
 };
+
