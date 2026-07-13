@@ -438,6 +438,34 @@ const resetPassword = async (
   });
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const googleLoginSuccess = async (session: Record<string, any>) => {
+  const accessToken = tokenUtils.getAccessToken({
+    userId: session.user.id,
+    role: session.user.role,
+    name: session.user.name || "",
+    email: session.user.email,
+    status: session.user.status,
+    isDeleted: session.user.isDeleted,
+    emailVerified: session.user.emailVerified,
+  });
+
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: session.user.id,
+    role: session.user.role,
+    name: session.user.name || "",
+    email: session.user.email,
+    status: session.user.status,
+    isDeleted: session.user.isDeleted,
+    emailVerified: session.user.emailVerified,
+  });
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
 export const AuthService = {
   RegisterSupporter,
   loginUser,
@@ -449,5 +477,5 @@ export const AuthService = {
   logoutUser,
   forgetPassword,
   resetPassword,
+  googleLoginSuccess,
 };
-
