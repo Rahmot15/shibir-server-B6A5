@@ -1,51 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Login</title>
+    <title>Signing you in — Shibir</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #060e09;
+            background-image:
+                radial-gradient(ellipse 900px 500px at 15% -10%, rgba(16, 185, 129, 0.14), transparent 60%),
+                radial-gradient(ellipse 700px 500px at 100% 110%, rgba(16, 185, 129, 0.08), transparent 55%);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e7f5ec;
+            padding: 1.5rem;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            padding: 2.25rem 2rem;
+            background: linear-gradient(180deg, rgba(16, 40, 28, 0.55), rgba(6, 14, 9, 0.55));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            border-radius: 20px;
+            box-shadow:
+                0 30px 60px -20px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            text-align: left;
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #6ee7b7;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.3rem 0.65rem;
+            border-radius: 999px;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
+            animation: blink 1.4s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.35;
+            }
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .spinner-wrap {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        .spinner {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2.5px solid rgba(16, 185, 129, 0.12);
+            border-top-color: #34d399;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .google-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 18px;
+            height: 18px;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.2rem;
+        }
+
+        p.sub {
+            font-size: 0.85rem;
+            color: #7fa895;
+            line-height: 1.5;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 3px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 40%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #10b981, #6ee7b7);
+            animation: slide 1.3s ease-in-out infinite;
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(350%);
+            }
+        }
+
+        .error-card {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 1.25rem;
+            border-radius: 14px;
+            margin-top: 1.25rem;
+        }
+
+        .error-card h3 {
+            color: #fca5a5;
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .error-message {
+            color: #f19999;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            word-break: break-word;
+        }
+
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background: rgba(239, 68, 68, 0.12);
+            color: #fecaca;
+            font-weight: 500;
+            font-size: 0.85rem;
+            padding: 0.7rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-retry:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.45);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .card,
+            .spinner,
+            .tag .dot,
+            .progress-fill {
+                animation: none !important;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <div>
-        <p>Redirecting To Google...</p>
+    <div class="card" id="status-card">
+        <span class="tag"><span class="dot"></span>Shibir</span>
+
+        <div class="row">
+            <div class="spinner-wrap">
+                <div class="spinner"></div>
+                <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+            </div>
+            <div>
+                <h2>Connecting to Google</h2>
+                <p class="sub">Redirecting you to sign in securely...</p>
+            </div>
+        </div>
+
+        <div class="progress-track">
+            <div class="progress-fill"></div>
+        </div>
     </div>
-</body>
-<script>
-    (
-        async () => {
+
+    <script>
+        (async () => {
+            const statusCard = document.getElementById("status-card");
             try {
                 const response = await fetch("<%= betterAuthUrl %>/api/auth/sign-in/social", {
-                    method : "POST",
-                    headers : {
-                        "Content-Type" : "application/json"
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
                     },
-                    credentials : "include",
+                    credentials: "include",
                     body: JSON.stringify({
-                        provider : "google",
+                        provider: "google",
                         callbackURL: "<%= callbackURL %>"
                     })
-                })
+                });
 
                 const data = await response.json();
 
-                if(data.url){
-                    window.location.href = data.url
-                }else{
-                    document.body.innerHTML = `<div>
-                    <p>
-                        Error Occurred While Redirecting To Google. Please Try Again Later.
-                    </p>
-                    </div>`
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    showError("Redirect failed", "We couldn't get the Google sign-in link from the server. Please try again.");
                 }
             } catch (error) {
-                document.body.innerHTML = `<div>
-                    <p>
-                        Error Occurred While Redirecting To Google. Please Try Again Later.
-                        ${error.message}
-                    </p>
-                    </div>`
+                showError("Something went wrong", error.message || "An unexpected error occurred while redirecting you.");
             }
-        }
-    )()
-</script>
+
+            function showError(title, message) {
+                statusCard.innerHTML = `
+                    <span class="tag"><span class="dot" style="background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.9);animation:none"></span>Shibir</span>
+                    <div class="error-card">
+                        <h3>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            ${title}
+                        </h3>
+                        <p class="error-message">${message}</p>
+                        <button class="btn-retry" onclick="window.location.reload()">Try again</button>
+                    </div>
+                `;
+            }
+        })();
+    </script>
+</body>
+
 </html>
