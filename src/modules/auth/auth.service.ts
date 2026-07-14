@@ -195,6 +195,8 @@ const getMe = async (user: IRequestUser) => {
       image: true,
       status: true,
       isDeleted: true,
+      emailVerified: true,
+      needPasswordChange: true,
       createdAt: true,
       updatedAt: true,
     },
