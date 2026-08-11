@@ -5,6 +5,7 @@ import { WorkerReportRoutes } from '../modules/WorkerReport/workerReport.route.j
 import { UserRoutes } from '../modules/User/user.route.js';
 import { AuthRoutes } from '../modules/auth/auth.route.js';
 import { SupportChatRoutes } from '../modules/SupportChat/supportChat.route.js';
+import { KishorkonthoRoutes } from '../modules/Kishorkontho/kishorkontho.route.js';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ const moduleRoutes: { path: string; route: Router }[] = [
   {
     path: '/support',
     route: SupportChatRoutes,
+  },
+  {
+    path: '/kishorkontho',
+    route: KishorkonthoRoutes,
   },
 ];
 

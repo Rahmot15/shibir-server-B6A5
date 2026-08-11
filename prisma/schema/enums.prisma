@@ -17,3 +17,27 @@ enum ConversationType {
   EXAM_HELP
   GENERAL_SUPPORT
 }
+
+enum ContentType {
+  STORY
+  POEM
+  SCIENCE
+  ISLAMIC
+  QUIZ
+  ART
+  TRAVEL
+}
+
+enum PurchaseType {
+  PHYSICAL
+  DIGITAL
+  BOTH
+}
+
+enum PaymentMethod {
+  BKASH
+  NAGAD
+  ROCKET
+  CARD
+  BANK
+}

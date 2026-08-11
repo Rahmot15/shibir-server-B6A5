@@ -25,6 +25,8 @@ model User {
   assignedSupportConversations SupportConversation[] @relation("SupportConversationAdmin")
   supportMessages              SupportMessage[]      @relation("SupportMessageSender")
 
+  kishorkonthoReviews KishorkonthoReview[]
+
   sessions Session[]
   accounts Account[]
 

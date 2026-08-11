@@ -1,0 +1,84 @@
+model KishorkonthoIssue {
+  id                  String   @id @default(uuid())
+  title               String
+  month               String
+  year                Int
+  price               Decimal  @db.Decimal(10, 2)
+  discount            Int      @default(0)
+  finalPrice          Decimal  @db.Decimal(10, 2)
+  currency            String   @default("BDT")
+  coverImage          String
+  description         String   @db.Text
+  slug                String   @unique
+
+  pdfFull             String?
+  pdfPreview          String?
+  isFreePreview       Boolean  @default(false)
+
+  purchaseType        PurchaseType @default(BOTH)
+  stock               Int      @default(0)
+  isAvailable         Boolean  @default(true)
+
+  paymentMethods      PaymentMethod[]
+  subscriptionEligible Boolean @default(false)
+  language            String   @default("Bangla")
+
+  publisherName       String
+  publisherOrg        String
+  editorName          String
+  editorRole          String   @default("Editor")
+
+  tags                String[]
+
+  averageRating       Decimal  @default(0) @db.Decimal(3, 2)
+  ratingCount         Int      @default(0)
+
+  views               Int      @default(0)
+  downloads           Int      @default(0)
+  purchases           Int      @default(0)
+
+  isDeleted           Boolean  @default(false)
+
+  contents            KishorkonthoContent[]
+  reviews             KishorkonthoReview[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([slug])
+  @@index([year, month])
+  @@index([isAvailable])
+  @@map("kishorkontho_issue")
+}
+
+model KishorkonthoContent {
+  id        String      @id @default(uuid())
+  issueId   String
+  issue     KishorkonthoIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  type      ContentType
+  title     String
+  author    String
+  page      Int
+
+  @@index([issueId])
+  @@map("kishorkontho_content")
+}
+
+model KishorkonthoReview {
+  id        String   @id @default(uuid())
+  issueId   String
+  issue     KishorkonthoIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating    Int
+  comment   String   @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@unique([issueId, userId])
+  @@index([issueId])
+  @@index([userId])
+  @@map("kishorkontho_review")
+}
