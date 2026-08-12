@@ -86,6 +86,15 @@ const addReview = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const trackDownload = catchAsync(async (req: Request, res: Response) => {
+    const result = await KishorkonthoService.trackDownload(req.params.id as string);
+    res.status(status.OK).json({
+        success: true,
+        message: 'Download tracked',
+        data: result,
+    });
+});
+
 export const KishorkonthoController = {
     createIssue,
     getAllIssues,
@@ -94,4 +103,5 @@ export const KishorkonthoController = {
     updateIssue,
     deleteIssue,
     addReview,
+    trackDownload,
 };

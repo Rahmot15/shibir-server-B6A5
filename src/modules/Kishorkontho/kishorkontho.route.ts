@@ -49,4 +49,10 @@ router.post(
     KishorkonthoController.addReview
 );
 
+router.post(
+    '/:id/download',
+    auth(Role.ADMIN, Role.ASSOCIATE, Role.MEMBER, Role.SUPPORTER, Role.WORKER),
+    KishorkonthoController.trackDownload
+);
+
 export const KishorkonthoRoutes = router;

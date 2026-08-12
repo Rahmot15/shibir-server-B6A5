@@ -290,6 +290,13 @@ const addReview = async (issueId: string, userId: string, rating: number, commen
     return result;
 };
 
+const trackDownload = async (issueId: string) => {
+    return prisma.kishorkonthoIssue.update({
+        where: { id: issueId },
+        data: { downloads: { increment: 1 } },
+    });
+};
+
 export const KishorkonthoService = {
     createIssue,
     getAllIssues,
@@ -298,4 +305,5 @@ export const KishorkonthoService = {
     updateIssue,
     deleteIssue,
     addReview,
+    trackDownload,
 };
