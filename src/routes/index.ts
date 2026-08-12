@@ -6,6 +6,8 @@ import { UserRoutes } from '../modules/User/user.route.js';
 import { AuthRoutes } from '../modules/auth/auth.route.js';
 import { SupportChatRoutes } from '../modules/SupportChat/supportChat.route.js';
 import { KishorkonthoRoutes } from '../modules/Kishorkontho/kishorkontho.route.js';
+import { CartRoutes } from '../modules/Cart/cart.route.js';
+import { OrderRoutes } from '../modules/Order/order.route.js';
 
 const router = Router();
 
@@ -42,6 +44,14 @@ const moduleRoutes: { path: string; route: Router }[] = [
   {
     path: '/kishorkontho',
     route: KishorkonthoRoutes,
+  },
+  {
+    path: '/cart',
+    route: CartRoutes,
+  },
+  {
+    path: '/orders',
+    route: OrderRoutes,
   },
 ];
 

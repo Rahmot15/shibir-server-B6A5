@@ -41,6 +41,8 @@ model KishorkonthoIssue {
 
   contents            KishorkonthoContent[]
   reviews             KishorkonthoReview[]
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
