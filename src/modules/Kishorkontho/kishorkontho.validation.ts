@@ -70,8 +70,16 @@ const reviewZodSchema = z.object({
     }),
 });
 
+const updateReviewZodSchema = z.object({
+    body: z.object({
+        rating: z.number().int().min(1).max(5, 'Rating must be between 1 and 5').optional(),
+        comment: z.string().trim().min(1, 'Comment is required').optional(),
+    }),
+});
+
 export const KishorkonthoValidation = {
     createKishorkonthoZodSchema,
     updateKishorkonthoZodSchema,
     reviewZodSchema,
+    updateReviewZodSchema,
 };

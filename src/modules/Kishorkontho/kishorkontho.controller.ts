@@ -95,6 +95,68 @@ const trackDownload = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const updateReview = catchAsync(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const result = await KishorkonthoService.updateReview(
+        req.params.reviewId as string,
+        user.id,
+        user.role,
+        req.body
+    );
+    res.status(status.OK).json({
+        success: true,
+        message: 'Review updated successfully',
+        data: result,
+    });
+});
+
+const deleteReview = catchAsync(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    const result = await KishorkonthoService.deleteReview(
+        req.params.reviewId as string,
+        user.id,
+        user.role
+    );
+    res.status(status.OK).json({
+        success: true,
+        message: result.message,
+    });
+});
+
+const reportReview = catchAsync(async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    await KishorkonthoService.reportReview(
+        req.params.reviewId as string,
+        user.id,
+        req.body.reason
+    );
+    res.status(status.OK).json({
+        success: true,
+        message: 'Review reported successfully',
+    });
+});
+
+const moderateReview = catchAsync(async (req: Request, res: Response) => {
+    const result = await KishorkonthoService.moderateReview(
+        req.params.reviewId as string,
+        req.body.approve
+    );
+    res.status(status.OK).json({
+        success: true,
+        message: 'Review moderated successfully',
+        data: result,
+    });
+});
+
+const getReportedReviews = catchAsync(async (req: Request, res: Response) => {
+    const result = await KishorkonthoService.getReportedReviews();
+    res.status(status.OK).json({
+        success: true,
+        message: 'Reported reviews fetched',
+        data: result,
+    });
+});
+
 export const KishorkonthoController = {
     createIssue,
     getAllIssues,
@@ -103,5 +165,10 @@ export const KishorkonthoController = {
     updateIssue,
     deleteIssue,
     addReview,
+    updateReview,
+    deleteReview,
+    reportReview,
+    moderateReview,
+    getReportedReviews,
     trackDownload,
 };

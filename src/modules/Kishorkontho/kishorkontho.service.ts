@@ -157,6 +157,7 @@ const getIssueBySlug = async (slug: string) => {
         include: {
             contents: { orderBy: { page: 'asc' } },
             reviews: {
+                where: { isApproved: true },
                 include: {
                     user: {
                         select: { id: true, name: true, image: true },
@@ -259,12 +260,37 @@ const deleteIssue = async (id: string) => {
 };
 
 const addReview = async (issueId: string, userId: string, rating: number, comment: string) => {
+    // Check if user purchased this issue (completed order)
+    const hasPurchased = await prisma.orderItem.findFirst({
+        where: {
+            issueId,
+            order: {
+                userId,
+                status: { in: ['PAID', 'SHIPPED', 'DELIVERED'] },
+            },
+        },
+    });
+
+    if (!hasPurchased) {
+        throw new Error('You can only review issues you have purchased');
+    }
+
+    // Check if user already reviewed
+    const existing = await prisma.kishorkonthoReview.findUnique({
+        where: { issueId_userId: { issueId, userId } },
+    });
+
+    if (existing) {
+        throw new Error('You have already reviewed this issue');
+    }
+
     const result = await prisma.kishorkonthoReview.create({
         data: {
             issueId,
             userId,
             rating,
             comment,
+            isApproved: true,
         },
         include: {
             user: {
@@ -273,8 +299,94 @@ const addReview = async (issueId: string, userId: string, rating: number, commen
         },
     });
 
+    await recalculateRating(issueId);
+    return result;
+};
+
+const updateReview = async (reviewId: string, userId: string, userRole: string, data: { rating?: number; comment?: string }) => {
+    const review = await prisma.kishorkonthoReview.findUnique({ where: { id: reviewId } });
+
+    if (!review) throw new Error('Review not found');
+
+    // Owner or Admin can edit
+    const isOwner = review.userId === userId;
+    const isAdmin = userRole === 'ADMIN';
+    if (!isOwner && !isAdmin) throw new Error('You can only edit your own review');
+
+    const updated = await prisma.kishorkonthoReview.update({
+        where: { id: reviewId },
+        data: { ...data, isEdited: true },
+        include: {
+            user: {
+                select: { id: true, name: true, image: true },
+            },
+        },
+    });
+
+    await recalculateRating(review.issueId);
+    return updated;
+};
+
+const deleteReview = async (reviewId: string, userId: string, userRole: string) => {
+    const review = await prisma.kishorkonthoReview.findUnique({ where: { id: reviewId } });
+
+    if (!review) throw new Error('Review not found');
+
+    const isOwner = review.userId === userId;
+    const isAdmin = userRole === 'ADMIN';
+    if (!isOwner && !isAdmin) throw new Error('You can only delete your own review');
+
+    await prisma.kishorkonthoReview.delete({ where: { id: reviewId } });
+    await recalculateRating(review.issueId);
+
+    return { message: 'Review deleted successfully' };
+};
+
+const reportReview = async (reviewId: string, userId: string, reason: string) => {
+    const review = await prisma.kishorkonthoReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new Error('Review not found');
+    if (review.userId === userId) throw new Error('You cannot report your own review');
+
+    return prisma.kishorkonthoReview.update({
+        where: { id: reviewId },
+        data: {
+            isReported: true,
+            reportReason: reason,
+            reportedBy: userId,
+        },
+    });
+};
+
+const moderateReview = async (reviewId: string, approve: boolean) => {
+    const review = await prisma.kishorkonthoReview.findUnique({ where: { id: reviewId } });
+    if (!review) throw new Error('Review not found');
+
+    const updated = await prisma.kishorkonthoReview.update({
+        where: { id: reviewId },
+        data: { isApproved: approve },
+        include: {
+            user: { select: { id: true, name: true, image: true } },
+        },
+    });
+
+    await recalculateRating(review.issueId);
+    return updated;
+};
+
+const getReportedReviews = async () => {
+    return prisma.kishorkonthoReview.findMany({
+        where: { isReported: true },
+        include: {
+            user: { select: { id: true, name: true, image: true } },
+            issue: { select: { id: true, title: true, slug: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+};
+
+const recalculateRating = async (issueId: string) => {
     const stats = await prisma.kishorkonthoReview.aggregate({
-        where: { issueId },
+        where: { issueId, isApproved: true },
         _avg: { rating: true },
         _count: { rating: true },
     });
@@ -286,8 +398,6 @@ const addReview = async (issueId: string, userId: string, rating: number, commen
             ratingCount: stats._count.rating,
         },
     });
-
-    return result;
 };
 
 const trackDownload = async (issueId: string) => {
@@ -305,5 +415,10 @@ export const KishorkonthoService = {
     updateIssue,
     deleteIssue,
     addReview,
+    updateReview,
+    deleteReview,
+    reportReview,
+    moderateReview,
+    getReportedReviews,
     trackDownload,
 };

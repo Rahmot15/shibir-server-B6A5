@@ -49,10 +49,41 @@ router.post(
     KishorkonthoController.addReview
 );
 
+router.patch(
+    '/:id/reviews/:reviewId',
+    auth(Role.ADMIN, Role.ASSOCIATE, Role.MEMBER, Role.SUPPORTER, Role.WORKER),
+    validateRequest(KishorkonthoValidation.updateReviewZodSchema),
+    KishorkonthoController.updateReview
+);
+
+router.delete(
+    '/:id/reviews/:reviewId',
+    auth(Role.ADMIN, Role.ASSOCIATE, Role.MEMBER, Role.SUPPORTER, Role.WORKER),
+    KishorkonthoController.deleteReview
+);
+
 router.post(
     '/:id/download',
     auth(Role.ADMIN, Role.ASSOCIATE, Role.MEMBER, Role.SUPPORTER, Role.WORKER),
     KishorkonthoController.trackDownload
+);
+
+router.post(
+    '/:id/reviews/:reviewId/report',
+    auth(Role.ADMIN, Role.ASSOCIATE, Role.MEMBER, Role.SUPPORTER, Role.WORKER),
+    KishorkonthoController.reportReview
+);
+
+router.patch(
+    '/reviews/:reviewId/moderate',
+    auth(Role.ADMIN),
+    KishorkonthoController.moderateReview
+);
+
+router.get(
+    '/reviews/reported',
+    auth(Role.ADMIN),
+    KishorkonthoController.getReportedReviews
 );
 
 export const KishorkonthoRoutes = router;

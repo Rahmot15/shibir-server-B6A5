@@ -77,10 +77,18 @@ model KishorkonthoReview {
   rating    Int
   comment   String   @db.Text
 
+  isEdited    Boolean @default(false)
+  isApproved  Boolean @default(true)
+  isReported  Boolean @default(false)
+  reportReason String? @db.Text
+  reportedBy  String?
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([issueId, userId])
   @@index([issueId])
   @@index([userId])
+  @@index([isApproved])
   @@map("kishorkontho_review")
 }
